@@ -138,6 +138,14 @@ in {
       '';
     };
 
+    copyNetworkConfig = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Copy the default libvirtd network config to /var, enabling virbr0 with DHCP and NAT.
+      '';
+    };
+
   };
 
 
@@ -174,6 +182,7 @@ in {
     systemd.services.libvirtd-config = {
       description = "Libvirt Virtual Machine Management Daemon - configuration";
       script = ''
+        ${optionalString cfg.copyNetworkConfig ''
         # Copy default libvirt network config .xml files to /var/lib
         # Files modified by the user will not be overwritten
         for i in $(cd ${pkgs.libvirt}/var/lib && echo \
@@ -183,6 +192,7 @@ in {
             mkdir -p /var/lib/$(dirname $i) -m 755
             cp -npd ${pkgs.libvirt}/var/lib/$i /var/lib/$i
         done
+        ''}
 
         # Copy generated qemu config to libvirt directory
         cp -f ${qemuConfigFile} /var/lib/${dirName}/qemu.conf
